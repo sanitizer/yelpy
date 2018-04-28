@@ -41,9 +41,11 @@ export default class App extends React.Component {
                         longitude: location.coords.longitude
                     }
                 });
+                setTimeout(this._getCurrentLocation, 5000);
             },
             error => {
                 console.log("error", error);
+                setTimeout(this._getCurrentLocation, 5000);
             }
         );
     }
@@ -223,7 +225,7 @@ const styles = StyleSheet.create({
     },
     marginTB: {
         marginTop: 50,
-        marginBottom: 50
+        marginBottom: 10
     },
     header: {
         height: 50,
