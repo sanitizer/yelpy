@@ -14,6 +14,7 @@ export default class App extends React.Component {
         this._getCurrentLocation();
 
         this.state = {
+            remainingCalls: 0,
             table: {
                 dataSource: [],
                 tableHead: ["Name", "Address", "Phone", "Price", "Distance (miles)"],
@@ -69,25 +70,32 @@ export default class App extends React.Component {
     _getAllRestaurantsInArea() {
         if (this.state.query.offset <= this.state.query.total) {
             this._getRestaurantsInArea(this.state.query.offset)
-                .then(response => response.json())
-                .then(responseJson => {
-                    let table = this._buildMap(responseJson);
-                    this.state.table.dataSource.push.apply(this.state.table.dataSource, table);
-                    this.state.query.offset = this.state.table.dataSource.length;
+                .then(response => {
                     this.setState({
-                        table: {
-                            dataSource: this.state.table.dataSource,
-                            tableHead: ["Name", "Address", "Phone", "Price", "Distance (miles)"],
-                            widthArr: [200, 350, 150, 100, 200]
-                        },
-                        query: {
-                            total: responseJson.total,
-                            offset: this.state.query.offset,
-                            distance: this.state.query.distance
-                        }
+                        remainingCalls: response.headers.map["ratelimit-remaining"]
                     });
+                    response.json()
+                        .then(responseJson => {
+                            let table = this._buildMap(responseJson);
+                            this.state.table.dataSource.push.apply(this.state.table.dataSource, table);
+                            this.state.query.offset = this.state.table.dataSource.length;
+                            this.setState({
+                                table: {
+                                    dataSource: this.state.table.dataSource,
+                                    tableHead: ["Name", "Address", "Phone", "Price", "Distance (miles)"],
+                                    widthArr: [200, 350, 150, 100, 200]
+                                },
+                                query: {
+                                    total: responseJson.total,
+                                    offset: this.state.query.offset,
+                                    distance: this.state.query.distance
+                                }
+                            });
+                        });
                 })
-                .catch(error => console.log("error", error));
+                .catch(error => {
+                    console.log("error", error)
+                });
         }
     }
 
@@ -200,6 +208,9 @@ export default class App extends React.Component {
                     </Text>
                     <Text>
                         Longitude: {this.state.location.longitude}
+                    </Text>
+                    <Text>
+                        Remaining Calls: {this.state.remainingCalls}
                     </Text>
                 </View>
             </View>
