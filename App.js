@@ -10,49 +10,86 @@ export default class App extends React.Component {
         this._updateDistance = this._updateDistance.bind(this);
         this._getRestaurantsInAreaResetFromStart = this._getRestaurantsInAreaResetFromStart.bind(this);
         this._getAllRestaurantsInArea = this._getAllRestaurantsInArea.bind(this);
+        this._getCurrentLocation = this._getCurrentLocation.bind(this);
+        this._getCurrentLocation();
+
         this.state = {
-            dataSource: [],
-            tableHead: ["Name", "Address", "Phone", "Price", "Distance (miles)"],
-            widthArr: [200, 350, 150, 100, 200],
-            distance: "",
-            total: 0,
-            offset: 0
+            table: {
+                dataSource: [],
+                tableHead: ["Name", "Address", "Phone", "Price", "Distance (miles)"],
+                widthArr: [200, 350, 150, 100, 200]
+            },
+            query: {
+                distance: "",
+                total: 0,
+                offset: 0
+            },
+            location: {
+                latitude: 0,
+                longitude: 0
+            }
+
         }
     }
 
-    _getRestaurantsInAreaResetFromStart () {
-            this.setState({
+    _getCurrentLocation() {
+        navigator.geolocation.getCurrentPosition(
+            location => {
+                this.setState({
+                    location: {
+                        latitude: location.coords.latitude,
+                        longitude: location.coords.longitude
+                    }
+                });
+                console.log(location);
+            },
+            error => {
+                console.log("error", error);
+            }
+        );
+    }
+
+    _getRestaurantsInAreaResetFromStart() {
+        this.setState({
+            table: {
                 dataSource: [],
+            },
+            query: {
                 total: 0,
                 offset: 0
-            });
-            this._getAllRestaurantsInArea();
+            }
+        });
+        this._getAllRestaurantsInArea();
     }
 
     _getAllRestaurantsInArea() {
-        if (this.state.offset <= this.state.total) {
-            this._getRestaurantsInArea(this.state.offset)
+        if (this.state.query.offset <= this.state.query.total) {
+            this._getRestaurantsInArea(this.state.query.offset)
                 .then(response => response.json())
                 .then(responseJson => {
                     let table = this._buildMap(responseJson);
-                    this.state.dataSource.push.apply(this.state.dataSource, table);
-                    this.state.offset += 50;
+                    this.state.table.dataSource.push.apply(this.state.table.dataSource, table);
+                    this.state.query.offset += 50;
                     this.setState({
-                        dataSource: this.state.dataSource,
-                        total: responseJson.total,
-                        offset: this.state.offset
+                        table: {
+                            dataSource: this.state.table.dataSource
+                        },
+                        query: {
+                            total: responseJson.total,
+                            offset: this.state.query.offset
+                        }
                     });
                 })
                 .catch(error => console.log("error", error));
         }
     }
 
-    _getRestaurantsInArea (offset) {
-        let distance = parseInt(this.state.distance * 1609.34, 10);
+    _getRestaurantsInArea(offset) {
+        let distance = parseInt(this.state.query.distance * 1609.34, 10);
         if (distance > max_dist) {
             distance = max_dist;
         }
-        return fetch(`https://api.yelp.com/v3/businesses/search?latitude=${lat}&longitude=${long}&radius=${distance}&categories=food, all&limit=50&offset=${offset}`,
+        return fetch(`https://api.yelp.com/v3/businesses/search?latitude=${this.state.location.latitude}&longitude=${this.state.location.longitude}&radius=${distance}&categories=food, all&limit=50&offset=${offset}`,
             {
                 method: 'GET',
                 headers: {
@@ -82,11 +119,23 @@ export default class App extends React.Component {
 
     _updateDistance(text) {
         if (text && !isNaN(text) && Number(text) >= 0 && Number(text) <= 25) {
-            this.setState({distance: Number(text).toString()});
+            this.setState({
+                query: {
+                    distance: Number(text).toString()
+                }
+            });
         } else if (text) {
-            this.setState({distance: this.state.distance});
+            this.setState({
+                query: {
+                    distance: this.state.query.distance
+                }
+            });
         } else {
-            this.setState({distance: null});
+            this.setState({
+                query: {
+                    distance: null
+                }
+            });
         }
     }
 
@@ -97,17 +146,17 @@ export default class App extends React.Component {
                             horizontal={true}>
                     <View>
                         <Table borderStyle={{borderColor: '#C1C0B9'}}>
-                            <Row data={this.state.tableHead}
-                                 widthArr={this.state.widthArr}
+                            <Row data={this.state.table.tableHead}
+                                 widthArr={this.state.table.widthArr}
                                  style={styles.header}
                                  textStyle={styles.text}/>
                         </Table>
                         <ScrollView style={styles.dataWrapper}>
                             <Table borderStyle={{borderColor: '#C1C0B9'}}>
-                                {this.state.dataSource.map((place, index) =>
+                                {this.state.table.dataSource.map((place, index) =>
                                     <Row key={index}
                                          data={place}
-                                         widthArr={this.state.widthArr}
+                                         widthArr={this.state.table.widthArr}
                                          style={[styles.row, index % 2 && {backgroundColor: '#F7F6E7'}]}
                                          textStyle={styles.text}/>)}
                             </Table>
@@ -119,13 +168,27 @@ export default class App extends React.Component {
                         label="Radius in miles"
                         style={{textAlign: 'center'}}
                         onChangeText={text => this._updateDistance(text)}
-                        value={this.state.distance}/>
+                        value={this.state.query.distance}/>
                     <Button title="Load Data"
                             onPress={this._getRestaurantsInAreaResetFromStart}
-                            disabled={!this.state.distance}/>
+                            disabled={!this.state.query.distance}/>
                     <Button title="Get More"
                             onPress={this._getAllRestaurantsInArea}
-                            disabled={!this.state.distance || this.state.offset === 0}/>
+                            disabled={!this.state.query.distance || this.state.query.offset === 0}/>
+                </View>
+                <View style={styles.marginBottom}>
+                    <Text>
+                        Loaded Records: {this.state.table.dataSource.length}
+                    </Text>
+                    <Text>
+                        Total Records: {this.state.query.total}
+                    </Text>
+                    <Text>
+                        Latitude: {this.state.location.latitude}
+                    </Text>
+                    <Text>
+                        Longitude: {this.state.location.longitude}
+                    </Text>
                 </View>
             </View>
         );
@@ -133,8 +196,6 @@ export default class App extends React.Component {
 }
 
 const key = '';
-const lat = '';
-const long = '';
 const max_dist = 40000; //this is max (25 miles) the value is in meters
 
 const styles = StyleSheet.create({
