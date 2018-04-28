@@ -41,7 +41,6 @@ export default class App extends React.Component {
                         longitude: location.coords.longitude
                     }
                 });
-                console.log(location);
             },
             error => {
                 console.log("error", error);
@@ -53,10 +52,13 @@ export default class App extends React.Component {
         this.setState({
             table: {
                 dataSource: [],
+                tableHead: ["Name", "Address", "Phone", "Price", "Distance (miles)"],
+                widthArr: [200, 350, 150, 100, 200]
             },
             query: {
                 total: 0,
-                offset: 0
+                offset: 0,
+                distance: this.state.query.distance
             }
         });
         this._getAllRestaurantsInArea();
@@ -72,11 +74,14 @@ export default class App extends React.Component {
                     this.state.query.offset += 50;
                     this.setState({
                         table: {
-                            dataSource: this.state.table.dataSource
+                            dataSource: this.state.table.dataSource,
+                            tableHead: ["Name", "Address", "Phone", "Price", "Distance (miles)"],
+                            widthArr: [200, 350, 150, 100, 200]
                         },
                         query: {
                             total: responseJson.total,
-                            offset: this.state.query.offset
+                            offset: this.state.query.offset,
+                            distance: this.state.query.distance
                         }
                     });
                 })
@@ -102,7 +107,6 @@ export default class App extends React.Component {
 
     _buildMap(responseJson) {
         let tableData = [];
-        console.log("total", responseJson.total);
         let rawData = responseJson.businesses;
         for (let i = 0; i < rawData.length; i++) {
             let distance = (0.000621371 * Number(rawData[i].distance)).toFixed(2);
@@ -121,19 +125,25 @@ export default class App extends React.Component {
         if (text && !isNaN(text) && Number(text) >= 0 && Number(text) <= 25) {
             this.setState({
                 query: {
-                    distance: Number(text).toString()
+                    distance: Number(text).toString(),
+                    total: this.state.query.total,
+                    offset: this.state.query.offset
                 }
             });
         } else if (text) {
             this.setState({
                 query: {
-                    distance: this.state.query.distance
+                    distance: this.state.query.distance,
+                    total: this.state.query.total,
+                    offset: this.state.query.offset
                 }
             });
         } else {
             this.setState({
                 query: {
-                    distance: null
+                    distance: null,
+                    total: this.state.query.total,
+                    offset: this.state.query.offset
                 }
             });
         }
@@ -174,7 +184,7 @@ export default class App extends React.Component {
                             disabled={!this.state.query.distance}/>
                     <Button title="Get More"
                             onPress={this._getAllRestaurantsInArea}
-                            disabled={!this.state.query.distance || this.state.query.offset === 0}/>
+                            disabled={this.state.query.offset === 0}/>
                 </View>
                 <View style={styles.marginBottom}>
                     <Text>
