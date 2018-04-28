@@ -41,11 +41,11 @@ export default class App extends React.Component {
                         longitude: location.coords.longitude
                     }
                 });
-                setTimeout(this._getCurrentLocation, 5000);
+                setTimeout(this._getCurrentLocation, 15000);
             },
             error => {
                 console.log("error", error);
-                setTimeout(this._getCurrentLocation, 5000);
+                setTimeout(this._getCurrentLocation, 15000);
             }
         );
     }
@@ -73,7 +73,7 @@ export default class App extends React.Component {
                 .then(responseJson => {
                     let table = this._buildMap(responseJson);
                     this.state.table.dataSource.push.apply(this.state.table.dataSource, table);
-                    this.state.query.offset += 50;
+                    this.state.query.offset = this.state.table.dataSource.length;
                     this.setState({
                         table: {
                             dataSource: this.state.table.dataSource,
@@ -186,7 +186,7 @@ export default class App extends React.Component {
                             disabled={!this.state.query.distance}/>
                     <Button title="Get More"
                             onPress={this._getAllRestaurantsInArea}
-                            disabled={this.state.query.offset === 0}/>
+                            disabled={this.state.query.offset === 0 || this.state.query.total === this.state.table.dataSource.length}/>
                 </View>
                 <View style={styles.marginBottom}>
                     <Text>
