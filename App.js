@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, AppRegistry, Alert, StyleSheet, Text, View, Button} from 'react-native';
+import {ScrollView, AppRegistry, Alert, StyleSheet, Text, View, Button, Dimensions, FlatList} from 'react-native';
 import {Table, TableWrapper, Row} from 'react-native-table-component';
 import {TextField} from 'react-native-material-textfield';
 
@@ -161,57 +161,55 @@ export default class App extends React.Component {
 
     render() {
         return (
-            <View style={styles.container}>
-                <ScrollView style={styles.marginTB}
-                            horizontal={true}>
-                    <View>
-                        <Table borderStyle={{borderColor: '#C1C0B9'}}>
-                            <Row data={this.state.table.tableHead}
-                                 widthArr={this.state.table.widthArr}
-                                 style={styles.header}
-                                 textStyle={styles.text}/>
-                        </Table>
-                        <ScrollView style={styles.dataWrapper}>
+            <View class={styles.container} >
+                <View style={{height: Dimensions.get("window").height * .6}}>
+                    <ScrollView style={styles.marginTB}
+                                horizontal={true}>
+                        <View>
                             <Table borderStyle={{borderColor: '#C1C0B9'}}>
-                                {this.state.table.dataSource.map((place, index) =>
-                                    <Row key={index}
-                                         data={place}
-                                         widthArr={this.state.table.widthArr}
-                                         style={[styles.row, index % 2 && {backgroundColor: '#F7F6E7'}]}
-                                         textStyle={styles.text}/>)}
+                                <Row data={this.state.table.tableHead}
+                                     widthArr={this.state.table.widthArr}
+                                     style={styles.header}
+                                     textStyle={styles.text}/>
                             </Table>
-                        </ScrollView>
-                    </View>
-                </ScrollView>
-                <View style={styles.marginBottom}>
+                            <ScrollView style={styles.dataWrapper}>
+                                <Table borderStyle={{borderColor: '#C1C0B9'}}>
+                                    {this.state.table.dataSource.map((place, index) =>
+                                        <Row key={index}
+                                             data={place}
+                                             widthArr={this.state.table.widthArr}
+                                             style={[styles.row, index % 2 && {backgroundColor: '#F7F6E7'}]}
+                                             textStyle={styles.text}/>)}
+                                </Table>
+                            </ScrollView>
+                        </View>
+                    </ScrollView>
+                </View>
+                <View>
+                    <FlatList data={[{key: `Loaded Records: ${this.state.table.dataSource.length}`},
+                                     {key: `Total Records: ${this.state.query.total}`},
+                                     {key: `Latitude: ${this.state.location.latitude}`},
+                                     {key: `Longitude: ${this.state.location.longitude}`},
+                                     {key: `Remaining Calls: ${this.state.remainingCalls}`}]}
+                              renderItem={({item}) => <Text>{item.key}</Text>}/>
+                </View>
+                <View>
                     <TextField
                         label="Radius in miles"
-                        style={{textAlign: 'center'}}
                         onChangeText={text => this._updateDistance(text)}
                         value={this.state.query.distance}/>
-                    <Button title="Load Data"
-                            onPress={this._getRestaurantsInAreaResetFromStart}
-                            disabled={!this.state.query.distance}/>
-                    <Button title="Get More"
-                            onPress={this._getAllRestaurantsInArea}
-                            disabled={this.state.query.offset === 0 || this.state.query.total === this.state.table.dataSource.length}/>
                 </View>
-                <View style={styles.marginBottom}>
-                    <Text>
-                        Loaded Records: {this.state.table.dataSource.length}
-                    </Text>
-                    <Text>
-                        Total Records: {this.state.query.total}
-                    </Text>
-                    <Text>
-                        Latitude: {this.state.location.latitude}
-                    </Text>
-                    <Text>
-                        Longitude: {this.state.location.longitude}
-                    </Text>
-                    <Text>
-                        Remaining Calls: {this.state.remainingCalls}
-                    </Text>
+                <View class={styles.buttonContainer}>
+                    <View>
+                        <Button title="Load Data"
+                                onPress={this._getRestaurantsInAreaResetFromStart}
+                                disabled={!this.state.query.distance}/>
+                    </View>
+                    <View>
+                        <Button title="Get More"
+                                onPress={this._getAllRestaurantsInArea}
+                                disabled={this.state.query.offset === 0 || this.state.query.total === this.state.table.dataSource.length}/>
+                    </View>
                 </View>
             </View>
         );
@@ -226,16 +224,23 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         alignItems: 'center',
-        justifyContent: 'center',
+    },
+    buttonContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-around'
+    },
+    buttons: {
+        flex: 1,
     },
     marginTop: {
-        marginTop: 50
+        marginTop: 20
     },
     marginBottom: {
-        marginBottom: 50
+        marginBottom: 20
     },
     marginTB: {
-        marginTop: 50,
+        marginTop: 20,
         marginBottom: 10
     },
     header: {
